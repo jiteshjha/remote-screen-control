@@ -9,6 +9,7 @@ class ScreenCastFeed:
     def get_frame(self):
         img = ImageGrab.grab()
     	img_np = np.array(img)
+        print img_np.size
     	return img_np
 
     def set_frame(self, img_np):
