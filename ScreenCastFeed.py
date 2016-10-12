@@ -25,7 +25,7 @@ class ScreenCastFeed:
         pil_image = Image.open(pil_bytes)
         cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
         cv2.imshow("test", cv_image)
-    	cv2.waitKey(0)
+    	cv2.waitKey(10)
 
 if __name__=="__main__":
     sc = ScreenCastFeed("test")
