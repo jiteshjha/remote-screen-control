@@ -13,8 +13,32 @@ conn, addr = s.accept()
 print 'Connection address:', addr
 sc = ScreenCastFeed("test")
 while 1:
-    print "server"
-    data = conn.recv(BUFFER_SIZE)
-    if not data: break
-    sc.set_frame(data)
+    # print "server"
+    # data = conn.recv(8)
+    # if not data: break
+    # print data
+    # sc.set_frame(data)
+
+    totrec=0
+    metarec=0
+    msgArray = []
+    metaArray = []
+    while metarec < 8:
+        chunk = conn.recv(8 - metarec)
+        if chunk == '':
+            raise RuntimeError("Socket connection broken")
+        metaArray.append(chunk)
+        metarec += len(chunk)
+    lengthstr= ''.join(metaArray)
+    length=int(lengthstr)
+
+    while totrec<length :
+        chunk = conn.recv(length - totrec)
+        if chunk == '':
+            raise RuntimeError("Socket connection broken")
+        msgArray.append(chunk)
+        totrec += len(chunk)
+    msgArray = ''.join(msgArray)
+    sc.set_frame(msgArray)
+
 conn.close()
