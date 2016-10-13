@@ -13,14 +13,6 @@ s.connect((TCP_IP, TCP_PORT))
 sc = ScreenCastFeed("test")
 while 1:
     arr = sc.get_frame()
-    # length =len(arr)
-    # lengthstr=str(length).zfill(8)
-    #
-    # print length
-    # print lengthstr
-    # print "---"
-    #
-    # sent = s.send(arr)
 
     totalsent = 0
     metasent = 0

@@ -12,12 +12,11 @@ s.listen(5)
 conn, addr = s.accept()
 print 'Connection address:', addr
 sc = ScreenCastFeed("test")
+
+# Use bjoin instead of join when playing over LAN ;)
+# Use join instead of bjoin when playing over Localhost :3
+
 while 1:
-    # print "server"
-    # data = conn.recv(8)
-    # if not data: break
-    # print data
-    # sc.set_frame(data)
 
     totrec=0
     metarec=0
