@@ -2,7 +2,7 @@ import socket
 from ScreenCastFeed import ScreenCastFeed
 import os
 
-TCP_IP = '127.0.0.1'
+TCP_IP = '192.168.43.93'
 #TCP_IP = '192.168.43.33'
 TCP_PORT = 5005
 MESSAGE = "Hello, World!"
@@ -45,8 +45,14 @@ else:
         chara = s1.recv(1)
         
         if (chara == '0'):
-            os.system(exc)
+            if exc.find("space") != -1:
+                exc2 = exc.split("space")
+                exc2 = " ".join(exc2)
+                exc2 = exc2.replace("period",".")
+                print exc2
+                os.system(exc2)
             exc = ""
+            exc2 = ""
         else:
             exc = exc + chara
         print exc

@@ -3,7 +3,8 @@ from ScreenCastFeed import ScreenCastFeed
 import pyxhook
 import time
 import os,sys
-TCP_IP = '127.0.0.1'
+TCP_IP = '192.168.43.93'
+#TCP_IP = '10.87.2.92'
 TCP_PORT = 5005
 BUFFER_SIZE = 4000000
 
