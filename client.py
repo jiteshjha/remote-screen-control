@@ -40,19 +40,20 @@ if pid!=0:
             totalsent += sent
 else:
     exc = ""
+    exc2 = ""
     while True:
         
         chara = s1.recv(1)
         
         if (chara == '0'):
-            if exc.find("space") != -1:
-                exc2 = exc.split("space")
-                exc2 = " ".join(exc2)
-                exc2 = exc2.replace("period",".")
-                print exc2
-                os.system(exc2)
+            exc = exc.replace("space"," ")
+            exc = exc.replace("period",".")
+            exc = exc.replace("slash","/")
+            # exc = exc2
+            print exc
+            os.system(exc)
             exc = ""
-            exc2 = ""
+            # exc2 = ""
         else:
             exc = exc + chara
         print exc
