@@ -2,21 +2,35 @@ import socket
 from ScreenCastFeed import ScreenCastFeed
 import pyxhook
 import time
-import os
+import os,sys
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
 BUFFER_SIZE = 4000000
 
+TCP_PORT_2 = 9651
+
 def kbevent( event ):
     
+    if(event.Key == 'z'):
+        sys.exit(0)
+    conn1.send(event.Key)
     print event
     
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
 s.listen(5)
 
+s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s1.bind((TCP_IP, TCP_PORT_2))
+s1.listen(5)
+
 conn, addr = s.accept()
+
+conn1, addr1 = s1.accept()
 print 'Connection address:', addr
+
+print 'KeyBoard Connection address:', addr1
+
 sc = ScreenCastFeed("test")
 
 # Use bjoin instead of join when playing over LAN ;)
@@ -48,6 +62,9 @@ if pid != 0:
         sc.set_frame(msgArray)
     conn.close()
 else:
+    
+    print "Enter 0 to Specify new Line:"
+    
     hookman = pyxhook.HookManager()
     #Define our callback to fire when a key is pressed down
     hookman.KeyDown = kbevent
@@ -57,7 +74,9 @@ else:
     hookman.start()
         
     #Create a loop to keep the application running
+   
     running = True
+
     while running:
         time.sleep(0.1)
         
