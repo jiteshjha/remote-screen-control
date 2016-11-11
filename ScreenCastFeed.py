@@ -3,7 +3,9 @@ import numpy as np
 import pyscreenshot as ImageGrab
 import io
 import sys
-from PIL import Image
+from PIL import Image, ImageTk
+import Tkinter as tk
+
 
 class ScreenCastFeed:
     def __init__(self, name="sc"):
@@ -21,11 +23,17 @@ class ScreenCastFeed:
         return im_bytes
 
     def set_frame(self, frame_bytes):
-    	pil_bytes = io.BytesIO(frame_bytes)
+	root = tk.Tk()
+	screen_width = root.winfo_screenwidth()
+	screen_height = root.winfo_screenheight()
+	pil_bytes = io.BytesIO(frame_bytes)
         pil_image = Image.open(pil_bytes)
-        cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-        cv2.imshow("test", cv_image)
-    	cv2.waitKey(1)
+        photo = ImageTk.PhotoImage(image = pil_image)
+	label = tk.Label(root, image= photo)
+	label.place(x=0, y=0, relwidth= screen_width/2, relheight= screen_height/2)
+	label.grid()
+	root.mainloop()
+	
 
 if __name__=="__main__":
     sc = ScreenCastFeed("test")
