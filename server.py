@@ -10,10 +10,11 @@ from Tkinter import *
 import numpy as np
 from PIL import Image, ImageTk
 import traceback
+from tkFileDialog import askopenfilename
 
-
-#TCP_IP = '192.168.43.46'
-#TCP_IP = '127.0.0.1'
+child = 0
+new_width = 0
+new_height = 0
 TCP_IP = ''
 port = 10100
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -25,8 +26,7 @@ ad = ''.join(str(address));
 ad1 = ad.split()
 ad2= ad1[0]
 ad3=ad2[2:15]
-print ad3, message
-#print ad, ad1, ad2, ad3
+#print ad3, message
 s.close()
 ad3 = ad3.replace("'", "")
 ad3 = ad3.replace(",", "")
@@ -45,8 +45,7 @@ s.sendto(TCP_IP, dest)
 s.close()
 
 
-
-
+#TCP_IP = '127.0.0.1'
 
 TCP_PORT = 5006
 BUFFER_SIZE = 10000000
@@ -57,46 +56,79 @@ def kbevent( event ):
     	type = 0
 	conn1.send(str(type).zfill(2))  	
 	conn1.send(event.Key)
-    #print event
-    
-#def key(event):
-#    print "pressed", repr(event.char)
+
 
 def left(event):
 	type = 1
+	x = ((event.x)*(screen_width/new_width))
+	y = ((event.y)*(screen_height/new_height))	
 	conn1.send(str(type).zfill(2))
 	conn1.send(str(event.x).zfill(4))
 	conn1.send(str(event.y).zfill(4))
 	
 
-#def middle(event):
-#    print("M Single Click, Button-l", event.x, event.y) 
 
 def right(event):
 	type = 2
+	x = ((event.x)*(screen_width/new_width))
+	y = ((event.y)*(screen_height/new_height))
 	conn1.send(str(type).zfill(2))
-	conn1.send(str(event.x).zfill(4))
-	conn1.send(str(event.y).zfill(4))
+	conn1.send(str(x).zfill(4))
+	conn1.send(str(y).zfill(4))
 
-#def _resize_image(event):
-#        origin = (0,0)
-#        size = (event.width, event.height)
-#        if label.bbox("bg") != origin + size:
-#            self.delete("bg")
-#            self.image = self.img_copy.resize(size)
-#            self.background_image = ImageTk.PhotoImage(self.image)
-#            self.create_image(*origin,anchor="nw",image=self.background_image,tags="bg")
-#            self.tag_lower("bg","all")
+def _resize_image(event):
+        origin = (0,0)
+        size = (event.width, event.height)
+	if label.bbox("bg") != origin + size:
+        	global new_height 
+		new_height = event.height
+		global new_width 
+		new_width = event.width
+		print new_width, new_height	
+
+def sendHotKey():
+	type = 0
+	conn1.send(str(type).zfill(2))  	
+	conn1.send("Term")	
+
+def sendFile():
+	try:
+		Tk().withdraw()
+		filename = askopenfilename()
+		list = filename.split('/')
+		l = len(list)
+		filename = filename.replace(' ', '')
+		type = 3
+		conn1.send(str(type).zfill(2))		
+		conn1.send(str(len(list[l-1])).zfill(3))
+		print len(list[l-1])		
+		conn1.send(str(list[l-1]))	
+		f = open(filename, 'rb').read()
+		meta = len(f)
+		print f
+		print meta
+		conn1.send(str(meta).zfill(8))
+		m = 0
+		while m < meta :
+			sent = conn1.send(f[m:])
+			if sent == 0:
+				raise RuntimeError("Socket connection broken")
+			m += sent
 		
-#def scroll_up(event):
-#   print("SU Single Click, Button-l", event.x, event.y)
+	except Exception as a:
+		print ("Error is: ", a)
 
+def closeButton():
+	type = 4
+	conn1.send(str(type).zfill(2))
+	conn1.close()
+	conn2.close()
+	s1.close()
+	s.close()	
+	root.destroy()
+	os.system("kill "+str(child))
+	sys.exit()
 
-#def scroll_down(event):
-#    print("SD Single Click, Button-l", event.x, event.y)  
-
-def quit(event):                           
-    print("Double Click, so let's stop", repr(event)) 
 
 s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s2.bind((TCP_IP, TCP_PORT_3))
@@ -135,23 +167,29 @@ widthstr = ''.join(warray)
 screen_width = int(widthstr)
 conn2.close()
 
+new_width = screen_width/2
+new_height = screen_height/2
+
 s2.close()
+conn, addr = s.accept()
+conn1, addr1 = s1.accept()
 
 root = tk.Tk()
 root.title("Harambe")
-root.geometry(str(screen_width) + "x" + str(screen_height))
+root.geometry(str(screen_width/2) + "x" + str(screen_height/2 + 40))
+#root.bind("<Configure>",_resize_image)
+openTerm = tk.Button(root, text = "Open Terminal", padx = 10, pady = 10, justify = CENTER, command = sendHotKey)
+openTerm.place(y = (new_height), x = (new_width - 400))   	
+sendFile = tk.Button(root, text = "Send File", padx = 10, pady = 10, justify = CENTER, command = sendFile)
+sendFile.place(y = (new_height), x = (400))   
+closeB = tk.Button(root, text = "X", padx = 10, pady = 10, justify = CENTER, command = closeButton)
+closeB.place(y = (new_height), x = 50)   
 
-conn, addr = s.accept()
-conn1, addr1 = s1.accept()
-#print 'Connection address:', addr
 
-#print 'KeyBoard Connection address:', addr1
-		
-# Use bjoin instead of join when playing over LAN ;)
-# Use join instead of bjoin when playing over Localhost :3
 counter = 0
 pid = os.fork()
 if pid != 0:
+	print "Starting: "
 	while 1:
 		try:
 			totrec=0
@@ -179,18 +217,15 @@ if pid != 0:
 			img_np = np.array(pil_image)
 			frame = cv2.cvtColor(np.array(img_np), cv2.COLOR_BGR2RGB)
 			pil_image = Image.fromarray(frame)
-			#pil_image = pil_image.resize((screen_width/2,screen_height/2), PIL.Image.ANTIALIAS)
+			pil_image = pil_image.resize((new_width,new_height), PIL.Image.ANTIALIAS)
 			photo = ImageTk.PhotoImage(image = pil_image)	
 			if (counter == 0) :	
 				label = tk.Label(root, image= photo)
-				#label.pack()
 				label.bind('<Button-1>', left)
  				#label.bind('<Button-2>', middle)
  				label.bind('<Button-3>', right)
-				#label.bind("<Configure>",_resize_image)
- 				#label.bind('<Button-4>', scroll_up)
+				#label.bind('<Button-4>', scroll_up)
  				#label.bind('<Button-5>', scroll_down)
-				#label.bind("<Key>", key)
 				label.grid()
 				label.update()
 			else:
@@ -206,8 +241,8 @@ if pid != 0:
     	conn.close()
 	print "Close conn"
 else:
+	child = pid
 	try:	    
-	    print "Enter 0 to Specify new Line:"
 	    
 	    hookman = pyxhook.HookManager()
 	    #Define our callback to fire when a key is pressed down

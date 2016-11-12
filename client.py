@@ -1,9 +1,12 @@
 import socket
-from ScreenCastFeed import ScreenCastFeed
+import cv2
+import numpy as np
 import os
 import time
-import pyautogui
-
+import pyautogui 
+from PIL import Image
+import pyscreenshot as ImageGrab
+import io
 
 port = 10100
 msg = socket.gethostbyname(socket.gethostname())
@@ -19,7 +22,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 s.bind((TCP_IP_2,port))
-message, address = s.recvfrom(10104)            
+message, address = s.recvfrom(1024)            
 ad = ''.join(str(address));
 ad1 = ad.split()
 ad2= ad1[0]
@@ -28,7 +31,7 @@ ad3 = ad3.replace("'", "")
 ad3 = ad3.replace(",", "")
 TCP_IP_2 = str(ad3)
 TCP_IP = message
-print TCP_IP_2
+#print TCP_IP_2
 print TCP_IP
 s.close()
 time.sleep(1)
@@ -36,13 +39,7 @@ time.sleep(1)
 TCP_IP =TCP_IP.strip()
 
 
-
-
-
-
-
 #TCP_IP = '127.0.0.1'
-#TCP_IP = '192.168.43.46'
 TCP_PORT = 5006
 MESSAGE = "Hello, World!"
 
@@ -80,18 +77,22 @@ while wsent < 8:
 
 s2.close()
 
-
-sc = ScreenCastFeed("test")
 pid = os.fork()
 if pid!=0:
    
     while 1:
 	try:
-        	arr = sc.get_frame()
-
+        	img = ImageGrab.grab()
+    		img_np = np.array(img)
+        	frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        	pil_im = Image.fromarray(frame)
+        	b = io.BytesIO()
+        	pil_im.save(b, 'jpeg')
+        	im_bytes = b.getvalue()
+        
         	totalsent = 0
         	metasent = 0
-		length =len(arr)
+		length =len(im_bytes)
 		lengthstr=str(length).zfill(8)
 
 		while metasent < 8 :
@@ -102,15 +103,14 @@ if pid!=0:
 
 
 		while totalsent < length :
-		    sent = s.send(arr[totalsent:])
+		    sent = s.send(im_bytes[totalsent:])
 		    if sent == 0:
 		        raise RuntimeError("Socket connection broken")
 		    totalsent += sent
 	except Exception as e:
 		print ("Error is: ", e)
 else:
-    #exc = ""
-    #exc2 = ""
+	child = pid
 	while True:
 		try:	    
 			type = s1.recv(2)
@@ -163,23 +163,39 @@ else:
 					pyautogui.press('right')
 				elif x == 'Left':
 					pyautogui.press('left')
+				elif x == 'Term':
+					pyautogui.hotkey('ctrl', 'alt', 't')
 				else:
 					pyautogui.press(x)
-			#chara = s1.recv(1)
-			
-			#if (chara == '0'):
-			#    exc = exc.replace("space"," ")
-			#   exc = exc.replace("period",".")
-			#    exc = exc.replace("slash","/")
-			#    # exc = exc2
-			#    #print exc
-			#    os.system(exc)
-			#    exc = ""
-			    # exc2 = ""
-			#else:
-			#   exc = exc + chara
-			#print exc
+			if type == 3:
+				farray = []
+				fsize = s1.recv(3)
+				fs = int(fsize)
+				print fs
+				filename = s1.recv(fs)
+				print filename
+				filename = filename.strip()				
+				meta = s1.recv(8)
+				print meta
+				m = int(meta)
+				print m
+				mrec = 0
+				while mrec < m:
+					chunk = s1.recv(m - mrec)
+					if chunk == b'':
+						raise RuntimeError("Socket connection broken")
+					farray.append(chunk)
+					mrec +=  len(chunk)
+				f = ''.join(farray)
+				f2 = open(filename, 'wb').write(f)
+			if type == 4:
+				s.close()
+				s1.close()
+				os.system("kill "+ str(child))
+				sys.exit()				
+	
 		except Exception as a:
+			time.sleep(2)
 			print ("Error is: ", a)        
 s.close()
 s1.close()
